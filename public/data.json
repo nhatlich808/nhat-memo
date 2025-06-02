@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "title": "Introduce JavaScript",
+    "content": "JavaScript is a most comon using for web development. Ex alert(123). Link refer nhat.blog/javascript."
+  },
+  {
+    "id": "2",
+    "title": "HTML basic",
+    "content": "HTML is a language to use build web skeleton. Link nhat.blog/html. example <h1>this is title</h1>"
+  },
+  {
+    "id": "3",
+    "title": "CSS advanced",
+    "content": "CSS helps us style the page.ex color: 'blue'"
+  },
+  {
+    "id": "4",
+    "title": "PHP Basic",
+    "content": "PHP helps us connect to database, delivery the data to HTML to display on UI. link nhat.blog/php"
+  }
+]
