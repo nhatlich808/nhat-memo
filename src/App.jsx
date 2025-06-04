@@ -20,8 +20,12 @@ import Link from '@mui/material/Link';
 import CopyrightIcon from '@mui/icons-material/Copyright';
 import Snackbar from '@mui/material/Snackbar';
 import CloseIcon from '@mui/icons-material/Close';
+import AnnouncementIcon from '@mui/icons-material/Announcement';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
 
 import lunr from 'lunr';
+import Papa from 'papaparse';
 
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
@@ -35,23 +39,52 @@ function App() {
   const [index, setIndex] = useState(null);
   const [snackOpen, setSnackOpen] = useState(false);
   const [documents, setDocuments] = useState([]);
+  const [displayUpdateNotice, setDisplayUpdateNotice] = useState(false);
+
+  const GSHEET_API_DATA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLpQjIlEUgchgcAAPYlFwwtCpAUMgcom9rdZhiwGgnaEmUihqXYnWSyVCHn52U0nQfwnIkVr_Zc3oK/pub?output=csv';
+  const GSHEET_API_VERSION = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSRSgP8OQ8GGHrtxyF-DgxmJ3JgWAiSAbjXslvaTwC-Y3mlLYQ9WDuhnohB8gXc_f_5riSJl_C3khws/pub?output=csv';
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await fetch('/data.json');
-      const json = await res.json();
-      setDocuments(json);
+      fetch(GSHEET_API_DATA)
+      .then(res => res.text())
+      .then(csv => {
+        Papa.parse(csv, {
+          header: true,
+          skipEmptyLines: true,
+          complete: results => {
+            setDocuments(results.data);
+            const idx = lunr(function () {
+              this.ref('id');
+              this.field('title');
+              this.field('content');
+              this.field('tags');
 
-      const idx = lunr(function () {
-        this.ref('id');
-        this.field('title');
-        this.field('content');
+              results.data.forEach(doc => this.add(doc));
+            });
 
-        json.forEach(doc => this.add(doc));
+            setIndex(idx);
+          }
+        });
       });
-
-      setIndex(idx);
     };
+
+    // const fetchVersion = () => {
+    //   fetch(GSHEET_API_VERSION)
+    //   .then(res => res.text())
+    //   .then(csv => {
+    //     Papa.parse(csv, {
+    //       header: true,
+    //       skipEmptyLines: true,
+    //       complete: results => {
+    //         const newVerData = results.data;
+    //         const newVer = newVerData[0]['name'];
+
+    //         setCurVersion(newVer);
+    //       }
+    //     });
+    //   });
+    // };
 
     fetchData();
   }, []);
@@ -152,6 +185,19 @@ function App() {
             message="Oops! You left the search keyword blank. Please enter a keyword and press Enter or click the Search button to search."
           />
         </Paper>
+        <Paper
+          elevation={0}
+          component="span"
+          sx={{ marginLeft: 3, padding: 2 }}
+        >
+          {displayUpdateNotice && (
+            <Tooltip title="Some data has changed, please refresh page to update new data.">
+              <IconButton>
+                <AnnouncementIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Paper>
       </Box>
       <Box component="section" className="content-wrapper" sx={{ paddingTop: '15px', flex: 1 }}>
         <Alert severity="info" sx={{mb: 2}}>Explore the search terms on <Link href="https://lunrjs.com/guides/searching.html">Lunr</Link>.</Alert>
@@ -176,10 +222,15 @@ function App() {
             display: 'flex',
             alignItems: 'top'
           }}>
-            <Box component="section" className="item-content" sx={{flex: 1}}>
+            <Box component="section" className="item-content" sx={{flex: 1, paddingBottom: '8px'}}>
               <Typography component="h4" sx={{fontSize: '2em'}}>
                 <CheckIcon sx={{color: '#4242e1'}} /> {post.content}
               </Typography>
+              <Stack spacing={1} direction="row" sx={{ alignItems: 'center' }}>
+                {post.tags.split(',').map(tag => (
+                  <Chip label={tag} size="small" color="primary" variant="outlined" />
+                ))}
+              </Stack>
             </Box>
             <Tooltip title={post.title} sx={{width: 48, height: 48}}>
               <IconButton>
