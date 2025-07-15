@@ -8,6 +8,9 @@ export default defineConfig({
   plugins: [
     react()
   ],
+  define: {
+    global: 'window',
+  },
   build: {
       rollupOptions: {
         plugins: [
@@ -19,6 +22,7 @@ export default defineConfig({
       },
   },
   optimizeDeps: {
+      include: ['buffer'],
       esbuildOptions: {
           // Node.js global to browser globalThis
           define: {
@@ -31,5 +35,10 @@ export default defineConfig({
               })
           ]
       }
-  }
+  },
+  resolve: {
+      alias: {
+          buffer: 'buffer',
+      },
+  },
 })
