@@ -18,6 +18,8 @@ export async function onRequestPost({ request, env }) {
         });
     } catch (err) {
         console.error("Error in /search:", err);
-        return new Response("Internal Server Error", { status: 500 });
+        return new Response(JSON.stringify({ text: 'Internal Server Error' + err.message }), {
+            headers: { "Content-Type": "application/json" },
+        });
     }
 }
