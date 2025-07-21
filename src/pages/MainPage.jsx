@@ -114,7 +114,7 @@ export default function MainPage(props) {
 
     const searchGemini = async (keyword) => {
         setGeminiSearching(true);
-        const geminiApiKey = env.GEMINI_API_KEY;
+        const geminiApiKey = import.meta.env.GEMINI_API_KEY;
         const ai = new GoogleGenAI({
             apiKey: geminiApiKey
         });
