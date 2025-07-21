@@ -113,15 +113,16 @@ export default function MainPage(props) {
     };
 
     const searchGemini = async (keyword) => {
-        setGeminiSearching(true);
-        fetch("/gemini_search", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query: keyword }),
-        })
-        .then(res => res.json())
-        .then(data => {
-            const geminiResultSearch = data.textResponse;
+        try {
+            setGeminiSearching(true);
+
+            const res = await fetch("/geminisearch", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query: keyword }),
+            });
+            const data = await res.json();
+            const geminiResultSearch = data.text;
             if (geminiResultSearch.length > 1) {
                 const result = {
                     'body': geminiResultSearch,
@@ -135,9 +136,18 @@ export default function MainPage(props) {
                 };
                 setResults([result]);
                 setResultOriginal('gemini');
+            } else {
+                setResults([]);
             }
-        });
-        setGeminiSearching(false);
+
+            setGeminiSearching(false);
+        } catch (e) {
+            console.log(e);
+            setResults([]);
+            setGeminiSearching(false);
+        } finally {
+            setGeminiSearching(false);
+        }
     }
 
     const switchSearchEngineHandle = (event) => {
