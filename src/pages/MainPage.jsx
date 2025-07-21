@@ -13,22 +13,27 @@ import {
   AccordionSummary,
   AccordionDetails,
   Snackbar,
-  Button
+  Button,
+  LinearProgress,
+  Alert
 } from '@mui/material';
 
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import SearchIcon from '@mui/icons-material/Search';
 import ErrorIcon from '@mui/icons-material/Error';
-import CloseIcon from '@mui/icons-material/Close';
 import CodeIcon from '@mui/icons-material/Code';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import ShareIcon from '@mui/icons-material/Share';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 
 import SwitcherMode from '../components/SwitcherMode.jsx';
+import SwitcherSearchEngine from '../components/SwitcherSearchEngine.jsx';
 
 import { getAllPosts, getMainPosts } from '../posts/index.js';
 import ReactMarkdown from "react-markdown";
 import lunr from 'lunr';
+
+import { GoogleGenAI } from "@google/genai";
 
 export default function MainPage(props) {
 
@@ -40,6 +45,10 @@ export default function MainPage(props) {
     const [mainPosts, setMainPosts] = React.useState([]);
     const [openDialog, setOpenDialog] = React.useState(false);
     const [resultMessage, setResultMessage] = React.useState('');
+
+    const [geminiSearching, setGeminiSearching] = React.useState(false);
+    const [resultOriginal, setResultOriginal] = React.useState('local');
+    const [searchEngine, setSearchEngine] = React.useState('gemini');
 
     React.useEffect(() => {
         const posts = getAllPosts();
@@ -72,16 +81,22 @@ export default function MainPage(props) {
         const keyword = searchFieldRef.current.value;
         
         if (index && keyword && keyword.trim().length > 1) {
-            const searchResults = index.search(keyword);
-            const matched = searchResults.map(r => documents.find(d => d.eid === r.ref));
-            if (matched.length <= 0) {
-                setOpenDialog(true);
-                setResultMessage('We could not find anything for "' + keyword + '"');
+            if (searchEngine === 'gemini') {
+                searchGemini(keyword);
             } else {
-                setOpenDialog(false);
-                setResultMessage('');
+                const searchResults = index.search(keyword);
+                const matched = searchResults.map(r => documents.find(d => d.eid === r.ref));
+                if (matched.length <= 0) {
+                    setOpenDialog(true);
+                    setResultMessage('No results found for the `' + keyword + '` keyword in NOTE. Try searching with Gemini AI instead.');
+                    setResults([]);
+                } else {
+                    setOpenDialog(false);
+                    setResultMessage('');
+                    setResults(matched);
+                }
+                setResultOriginal('local');
             }
-            setResults(matched);
         } else {
             setOpenDialog(true);
             setResultMessage('Oops! You tried to search with an empty keyword that has no meaning. Please try again.');
@@ -97,19 +112,43 @@ export default function MainPage(props) {
         setOpenDialog(false);
     };
 
+    const searchGemini = async (keyword) => {
+        setGeminiSearching(true);
+        const geminiApiKey = env.GEMINI_API_KEY;
+        const ai = new GoogleGenAI({
+            apiKey: geminiApiKey
+        });
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: keyword,
+        });
+        const geminiResultSearch = response.text;
+        if (geminiResultSearch.length > 1) {
+            const result = {
+                'body': geminiResultSearch,
+                'author': 'Gemini AI model version gemini-2.5-flash',
+                'date': '',
+                'eid': 1,
+                'excerpt': '',
+                'slug': '',
+                'tag': keyword,
+                'title': '`' + keyword + '`',
+            };
+            setResults([result]);
+            setResultOriginal('gemini');
+        }
+        setGeminiSearching(false);
+    }
+
+    const switchSearchEngineHandle = (event) => {
+        setSearchEngine(event.target.value);
+    }
+
     const actionDialog = (
         <React.Fragment>
             <Button color="secondary" size="small" onClick={handleDialogClose}>
                 GOT IT
             </Button>
-            <IconButton
-                size="small"
-                aria-label="close"
-                color="inherit"
-                onClick={handleDialogClose}
-            >
-                <CloseIcon fontSize="small" />
-            </IconButton>
         </React.Fragment>
     );
 
@@ -142,6 +181,7 @@ export default function MainPage(props) {
                         <ShareIcon />
                     </Typography>
                     <SwitcherMode />
+                    <SwitcherSearchEngine defaultSearchEngine={searchEngine} switchSearchEngineHandle={switchSearchEngineHandle} />
                     
                     <Box sx={{
                         display: 'flex',
@@ -150,6 +190,7 @@ export default function MainPage(props) {
                         gap: 1
                     }}>
                         <TextField
+                            disabled={geminiSearching}
                             placeholder="Search..."
                             fullWidth
                             variant="outlined"
@@ -174,8 +215,28 @@ export default function MainPage(props) {
                             action={actionDialog}
                         />
                     </Box>
+                    {resultOriginal === 'gemini' && (
+                        <Stack sx={{ width: '100%' }} spacing={2}>
+                            <Alert severity="warning">{ 'This search result is AI-generated and may contain inaccuracies. Please verify against official documentation or trusted sources.' }</Alert>
+                        </Stack>
+                    )}
                     <Stack spacing={2} sx={{ overflowY: 'auto' }}>
-                        {results.length <= 0 && mainPosts.map((post, idx) => {
+                        {geminiSearching && (
+                            <Stack sx={{ width: '100%', color: 'grey.500' }} spacing={2}>
+                                <LinearProgress color="secondary" />
+                                <LinearProgress color="success" />
+                                <LinearProgress color="inherit" />
+                            </Stack>
+                        )}
+                        {!geminiSearching && searchEngine == 'gemini' && results.length <= 0 && (
+                            <Typography sx={{
+                                height: 100,
+                                textAlign: 'center',
+                                width: '100%',
+                                marginTop: 40
+                            }}>{ 'What are you working on?' }</Typography>
+                        )}
+                        {!geminiSearching && searchEngine == 'local' && results.length <= 0 && mainPosts.map((post, idx) => {
                             if (idx === 0) {
                                 return (
                                     <Accordion
@@ -221,7 +282,7 @@ export default function MainPage(props) {
                             )
                         })}
 
-                        {results.length >= 1 && results.map((post, idx) => (
+                        {!geminiSearching && resultOriginal !== 'gemini' && results.length >= 1 && results.map((post, idx) => (
                         <Accordion
                             key={idx}
                             sx={{
@@ -234,6 +295,27 @@ export default function MainPage(props) {
                                 id="panel2-header"
                             >
                                 <Typography component="span">{post.title}</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Box><ReactMarkdown>{post.body}</ReactMarkdown></Box>
+                            </AccordionDetails>
+                        </Accordion>
+                        ))}
+                        {!geminiSearching && resultOriginal === 'gemini' && results.length >= 1 && results.map((post, idx) => (
+                        <Accordion
+                            key={idx}
+                            sx={{
+                                boxShadow: 'none',
+                            }}
+                            defaultExpanded
+                        >
+                            <AccordionSummary
+                                expandIcon={<ArrowDropDownIcon />}
+                                aria-controls="panel2-content"
+                                id="panel2-header"
+                            >
+                                <SmartToyIcon />
+                                <Typography component="span">{' Below is the information related to the keyword ' + post.title + '.'}</Typography>
                             </AccordionSummary>
                             <AccordionDetails>
                                 <Box><ReactMarkdown>{post.body}</ReactMarkdown></Box>

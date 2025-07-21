@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import Box from '@mui/material/Box';
+import FormLabel from '@mui/material/FormLabel';
 
 import { useColorScheme } from '@mui/material/styles';
 
@@ -11,6 +12,7 @@ export function GroupSwitcherMode({ defaultMode, switchModeHandle }) {
     return (
         <Box display="flex" justifyContent="space-between" alignItems="center">
             <FormControl>
+                <FormLabel id="demo-radio-buttons-group-label">{ 'Choose a theme: ' }</FormLabel>
                 <RadioGroup
                     row
                     aria-labelledby="demo-row-radio-buttons-group-label"
