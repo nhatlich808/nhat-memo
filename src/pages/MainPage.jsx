@@ -114,29 +114,29 @@ export default function MainPage(props) {
 
     const searchGemini = async (keyword) => {
         setGeminiSearching(true);
-        const geminiApiKey = import.meta.env.GEMINI_API_KEY;
-        const ai = new GoogleGenAI({
-            apiKey: geminiApiKey
+        fetch("/gemini_search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: keyword }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            const geminiResultSearch = data.textResponse;
+            if (geminiResultSearch.length > 1) {
+                const result = {
+                    'body': geminiResultSearch,
+                    'author': 'Gemini AI model version gemini-2.5-flash',
+                    'date': '',
+                    'eid': 1,
+                    'excerpt': '',
+                    'slug': '',
+                    'tag': keyword,
+                    'title': '`' + keyword + '`',
+                };
+                setResults([result]);
+                setResultOriginal('gemini');
+            }
         });
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: keyword,
-        });
-        const geminiResultSearch = response.text;
-        if (geminiResultSearch.length > 1) {
-            const result = {
-                'body': geminiResultSearch,
-                'author': 'Gemini AI model version gemini-2.5-flash',
-                'date': '',
-                'eid': 1,
-                'excerpt': '',
-                'slug': '',
-                'tag': keyword,
-                'title': '`' + keyword + '`',
-            };
-            setResults([result]);
-            setResultOriginal('gemini');
-        }
         setGeminiSearching(false);
     }
 
