@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-export async function onSearchPost({ request, env }) {
+export async function onRequestPost({ request, env }) {
     const { query } = await request.json();
     const geminiApiKey = env.GEMINI_API_KEY;
     const ai = new GoogleGenAI({
