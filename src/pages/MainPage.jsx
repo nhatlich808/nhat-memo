@@ -114,9 +114,7 @@ export default function MainPage(props) {
         try {
             setGeminiSearching(true);
 
-            const geminiContentGenerationApi = import.meta.env.VITE_GEMINI_CONTENT_GENERATION_API;
-
-            const res = await fetch(geminiContentGenerationApi, {
+            const res = await fetch('https://nhat-memo-vercel-functions-vqe7.vercel.app/api/gemini_generate_content', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query: keyword }),
