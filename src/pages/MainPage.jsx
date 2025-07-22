@@ -33,8 +33,6 @@ import { getAllPosts, getMainPosts } from '../posts/index.js';
 import ReactMarkdown from "react-markdown";
 import lunr from 'lunr';
 
-import { GoogleGenAI } from "@google/genai";
-
 export default function MainPage(props) {
 
     const searchFieldRef = React.useRef(null);
@@ -116,7 +114,9 @@ export default function MainPage(props) {
         try {
             setGeminiSearching(true);
 
-            const res = await fetch("/geminisearch", {
+            const geminiContentGenerationApi = import.meta.env.VITE_GEMINI_CONTENT_GENERATION_API;
+
+            const res = await fetch(geminiContentGenerationApi, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query: keyword }),
@@ -142,7 +142,6 @@ export default function MainPage(props) {
 
             setGeminiSearching(false);
         } catch (e) {
-            console.log(e);
             setResults([]);
             setGeminiSearching(false);
         } finally {
