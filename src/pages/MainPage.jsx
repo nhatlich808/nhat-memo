@@ -48,6 +48,8 @@ export default function MainPage(props) {
     const [resultOriginal, setResultOriginal] = React.useState('local');
     const [searchEngine, setSearchEngine] = React.useState('gemini');
 
+    const [streamText, setStreamText] = React.useState('');
+
     React.useEffect(() => {
         const posts = getAllPosts();
         const mainPost = getMainPosts();
@@ -112,32 +114,39 @@ export default function MainPage(props) {
 
     const searchGemini = async (keyword) => {
         try {
-            setGeminiSearching(true);
+            setStreamText('');
+            setGeminiSearching(false);
 
-            const res = await fetch('https://nhat-memo-vercel-functions-vqe7.vercel.app/api/gemini_generate_content', {
+            const res = await fetch('/geminisearch-stream', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query: keyword }),
             });
-            const data = await res.json();
-            const geminiResultSearch = data.text;
-            if (geminiResultSearch.length > 1) {
-                const result = {
-                    'body': geminiResultSearch,
-                    'author': 'Gemini AI model version gemini-2.5-flash',
-                    'date': '',
-                    'eid': 1,
-                    'excerpt': '',
-                    'slug': '',
-                    'tag': keyword,
-                    'title': '`' + keyword + '`',
-                };
-                setResults([result]);
-                setResultOriginal('gemini');
-            } else {
-                setResults([]);
-            }
 
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let done = false;
+
+            while (!done) {
+                const { value, done: streamDone } = await reader.read();
+                if (value) {
+                    const chunk = decoder.decode(value, { stream: true });
+                    console.log(chunk);
+                    setStreamText(prev => prev + chunk);
+                    setResults([{
+                        'body': streamText,
+                        'author': 'Gemini AI model version gemini-2.5-flash',
+                        'date': '',
+                        'eid': 1,
+                        'excerpt': '',
+                        'slug': '',
+                        'tag': keyword,
+                        'title': '`' + keyword + '`',
+                    }]);
+                }
+                done = streamDone;
+            }
+            setResultOriginal('gemini');
             setGeminiSearching(false);
         } catch (e) {
             setResults([]);
