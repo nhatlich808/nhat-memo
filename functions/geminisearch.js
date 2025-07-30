@@ -7,11 +7,16 @@ export async function onRequestPost({ request, env }) {
         const ai = new GoogleGenAI({
             apiKey: geminiApiKey
         });
-        const response = await ai.models.generateContent({
+        const response = await ai.models.generateContentStream({
             model: "gemini-2.5-flash",
             contents: query,
         });
-        return new Response(JSON.stringify({ text: response.text }), {
+        let text = "";
+        for await (const chunk of response) {
+            console.log(chunk.text);
+            text += chunk.text;
+        }
+        return new Response(JSON.stringify({ text: text }), {
             headers: { "Content-Type": "application/json" },
         });
     } catch (err) {

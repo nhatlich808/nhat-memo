@@ -117,36 +117,30 @@ export default function MainPage(props) {
             setStreamText('');
             setGeminiSearching(false);
 
-            const res = await fetch('/geminisearch-stream', {
+            const res = await fetch('/geminisearch', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query: keyword }),
             });
 
-            const reader = res.body.getReader();
-            const decoder = new TextDecoder('utf-8');
-            let done = false;
-
-            while (!done) {
-                const { value, done: streamDone } = await reader.read();
-                if (value) {
-                    const chunk = decoder.decode(value, { stream: true });
-                    console.log(chunk);
-                    setStreamText(prev => prev + chunk);
-                    setResults([{
-                        'body': streamText,
-                        'author': 'Gemini AI model version gemini-2.5-flash',
-                        'date': '',
-                        'eid': 1,
-                        'excerpt': '',
-                        'slug': '',
-                        'tag': keyword,
-                        'title': '`' + keyword + '`',
-                    }]);
-                }
-                done = streamDone;
+            const data = await res.json();
+            const geminiResultSearch = data.text;
+            if (geminiResultSearch.length > 1) {
+                const result = {
+                    'body': geminiResultSearch,
+                    'author': 'Gemini AI model version gemini-2.5-flash',
+                    'date': '',
+                    'eid': 1,
+                    'excerpt': '',
+                    'slug': '',
+                    'tag': keyword,
+                    'title': '`' + keyword + '`',
+                };
+                setResults([result]);
+                setResultOriginal('gemini');
+            } else {
+                setResults([]);
             }
-            setResultOriginal('gemini');
             setGeminiSearching(false);
         } catch (e) {
             setResults([]);
