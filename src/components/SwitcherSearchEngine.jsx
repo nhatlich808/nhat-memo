@@ -18,7 +18,7 @@ export function GroupSwitcherSearchEngine({ defaultSearchEngine, switchSearchEng
                     value={defaultSearchEngine}
                     onChange={switchSearchEngineHandle}
                 >
-                    <FormControlLabel value="gemini" control={<Radio />} label="Gemini AI Flash 2.5" />
+                    <FormControlLabel value="lorda" control={<Radio />} label="Lorda AI" />
                     <FormControlLabel value="local" control={<Radio />} label="Nhat's Sample Note" />
                 </RadioGroup>
             </FormControl>
@@ -28,7 +28,7 @@ export function GroupSwitcherSearchEngine({ defaultSearchEngine, switchSearchEng
 
 export default function SwitcherSearchEngine({defaultSearchEngine, switchSearchEngineHandle}) {
     if (!defaultSearchEngine) {
-        return <GroupSwitcherSearchEngine defaultSearchEngine={'gemini'} switchSearchEngineHandle={switchSearchEngineHandle} />;
+        return <GroupSwitcherSearchEngine defaultSearchEngine={'lorda'} switchSearchEngineHandle={switchSearchEngineHandle} />;
     }
 
     return <GroupSwitcherSearchEngine defaultSearchEngine={defaultSearchEngine} switchSearchEngineHandle={switchSearchEngineHandle} />;

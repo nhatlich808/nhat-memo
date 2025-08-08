@@ -14,7 +14,6 @@ import {
   AccordionDetails,
   Snackbar,
   Button,
-  LinearProgress,
   Alert
 } from '@mui/material';
 
@@ -24,7 +23,7 @@ import ErrorIcon from '@mui/icons-material/Error';
 import CodeIcon from '@mui/icons-material/Code';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import ShareIcon from '@mui/icons-material/Share';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
+import FaceIcon from '@mui/icons-material/Face';
 
 import SwitcherMode from '../components/SwitcherMode.jsx';
 import SwitcherSearchEngine from '../components/SwitcherSearchEngine.jsx';
@@ -44,11 +43,9 @@ export default function MainPage(props) {
     const [openDialog, setOpenDialog] = React.useState(false);
     const [resultMessage, setResultMessage] = React.useState('');
 
-    const [geminiSearching, setGeminiSearching] = React.useState(false);
+    const [contentGenerating, setContentGenerating] = React.useState(false);
     const [resultOriginal, setResultOriginal] = React.useState('local');
-    const [searchEngine, setSearchEngine] = React.useState('gemini');
-
-    const [streamText, setStreamText] = React.useState('');
+    const [searchEngine, setSearchEngine] = React.useState('lorda');
 
     React.useEffect(() => {
         const posts = getAllPosts();
@@ -81,14 +78,14 @@ export default function MainPage(props) {
         const keyword = searchFieldRef.current.value;
         
         if (index && keyword && keyword.trim().length > 1) {
-            if (searchEngine === 'gemini') {
-                searchGemini(keyword);
+            if (searchEngine === 'lorda') {
+                searchLorda(keyword);
             } else {
                 const searchResults = index.search(keyword);
                 const matched = searchResults.map(r => documents.find(d => d.eid === r.ref));
                 if (matched.length <= 0) {
                     setOpenDialog(true);
-                    setResultMessage('No results found for the `' + keyword + '` keyword in NOTE. Try searching with Gemini AI instead.');
+                    setResultMessage('No results found for the `' + keyword + '` keyword in NOTE. Try searching with Lorda AI instead.');
                     setResults([]);
                 } else {
                     setOpenDialog(false);
@@ -112,41 +109,56 @@ export default function MainPage(props) {
         setOpenDialog(false);
     };
 
-    const searchGemini = async (keyword) => {
+    const searchLorda = async (keyword) => {
         try {
-            setStreamText('');
-            setGeminiSearching(false);
-
-            const res = await fetch('/geminisearch', {
+            setContentGenerating(true);
+            const res = await fetch('https://nhat-memo-workers-ai.nhatlich808.workers.dev/', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ query: keyword }),
+                body: JSON.stringify({ message: keyword }),
             });
+            
+            // streaming
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let fullText = '';
 
-            const data = await res.json();
-            const geminiResultSearch = data.text;
-            if (geminiResultSearch.length > 1) {
-                const result = {
-                    'body': geminiResultSearch,
-                    'author': 'Gemini AI model version gemini-2.5-flash',
-                    'date': '',
-                    'eid': 1,
-                    'excerpt': '',
-                    'slug': '',
-                    'tag': keyword,
-                    'title': '`' + keyword + '`',
-                };
-                setResults([result]);
-                setResultOriginal('gemini');
-            } else {
-                setResults([]);
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split("\n").filter(line => line.startsWith("data:"));
+                for (const line of lines) {
+                    try {
+                        const jsonStr = line.replace(/^data:\s*/, "");
+                        const data = JSON.parse(jsonStr);
+                        if (data.response) {
+                            fullText += data.response;
+                            setResults([{
+                                'body': fullText,
+                                'author': 'Lorda',
+                                'date': '',
+                                'eid': 1,
+                                'excerpt': '',
+                                'slug': '',
+                                'tag': keyword,
+                                'title': '`' + keyword + '`',
+                            }]);
+                        }
+                    } catch (err) {
+                        // 
+                    }
+                }
+                setContentGenerating(false);
             }
-            setGeminiSearching(false);
+            setResultOriginal('lorda');
+            setContentGenerating(false);
         } catch (e) {
             setResults([]);
-            setGeminiSearching(false);
+            setContentGenerating(false);
         } finally {
-            setGeminiSearching(false);
+            setContentGenerating(false);
         }
     }
 
@@ -200,7 +212,7 @@ export default function MainPage(props) {
                         gap: 1
                     }}>
                         <TextField
-                            disabled={geminiSearching}
+                            disabled={contentGenerating}
                             placeholder="Search..."
                             fullWidth
                             variant="outlined"
@@ -225,28 +237,21 @@ export default function MainPage(props) {
                             action={actionDialog}
                         />
                     </Box>
-                    {resultOriginal === 'gemini' && (
+                    {resultOriginal === 'lorda' && (
                         <Stack sx={{ width: '100%' }} spacing={2}>
                             <Alert severity="warning">{ 'This search result is AI-generated and may contain inaccuracies. Please verify against official documentation or trusted sources.' }</Alert>
                         </Stack>
                     )}
                     <Stack spacing={2} sx={{ overflowY: 'auto' }}>
-                        {geminiSearching && (
-                            <Stack sx={{ width: '100%', color: 'grey.500' }} spacing={2}>
-                                <LinearProgress color="secondary" />
-                                <LinearProgress color="success" />
-                                <LinearProgress color="inherit" />
-                            </Stack>
-                        )}
-                        {!geminiSearching && searchEngine == 'gemini' && results.length <= 0 && (
+                        {!contentGenerating && searchEngine == 'lorda' && results.length <= 0 && (
                             <Typography sx={{
                                 height: 100,
                                 textAlign: 'center',
                                 width: '100%',
                                 marginTop: 40
-                            }}>{ 'What are you working on?' }</Typography>
+                            }}>{ 'What are you looking for?' }</Typography>
                         )}
-                        {!geminiSearching && searchEngine == 'local' && results.length <= 0 && mainPosts.map((post, idx) => {
+                        {!contentGenerating && searchEngine == 'local' && results.length <= 0 && mainPosts.map((post, idx) => {
                             if (idx === 0) {
                                 return (
                                     <Accordion
@@ -292,7 +297,7 @@ export default function MainPage(props) {
                             )
                         })}
 
-                        {!geminiSearching && resultOriginal !== 'gemini' && results.length >= 1 && results.map((post, idx) => (
+                        {!contentGenerating && resultOriginal !== 'lorda' && results.length >= 1 && results.map((post, idx) => (
                         <Accordion
                             key={idx}
                             sx={{
@@ -311,7 +316,7 @@ export default function MainPage(props) {
                             </AccordionDetails>
                         </Accordion>
                         ))}
-                        {!geminiSearching && resultOriginal === 'gemini' && results.length >= 1 && results.map((post, idx) => (
+                        {!contentGenerating && resultOriginal === 'lorda' && results.length >= 1 && results.map((post, idx) => (
                         <Accordion
                             key={idx}
                             sx={{
@@ -324,8 +329,8 @@ export default function MainPage(props) {
                                 aria-controls="panel2-content"
                                 id="panel2-header"
                             >
-                                <SmartToyIcon />
-                                <Typography component="span">{' Below is the information related to the keyword ' + post.title + '.'}</Typography>
+                                <FaceIcon />
+                                <Typography component="span" sx={{ marginLeft: '8px' }}>{ post.title }</Typography>
                             </AccordionSummary>
                             <AccordionDetails>
                                 <Box><ReactMarkdown>{post.body}</ReactMarkdown></Box>
