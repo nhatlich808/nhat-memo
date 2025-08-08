@@ -215,7 +215,7 @@ export default function MainPage(props) {
                 sx={{
                     width: '100%',
                     maxWidth: 992,
-                    height: '80vh',
+                    height: { xs: 'calc(100vh - 20px)', sm: '90vh', md: '80vh' },
                     p: 3,
                     display: 'flex',
                     flexDirection: 'column',
