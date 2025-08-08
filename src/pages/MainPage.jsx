@@ -239,7 +239,7 @@ export default function MainPage(props) {
                     </Box>
                     {resultOriginal === 'lorda' && (
                         <Stack sx={{ width: '100%' }} spacing={2}>
-                            <Alert severity="warning">{ 'This search result is AI-generated and may contain inaccuracies. Please verify against official documentation or trusted sources.' }</Alert>
+                            <Alert severity="warning">{ 'This result is AI-generated and may contain inaccuracies.' }</Alert>
                         </Stack>
                     )}
                     <Stack spacing={2} sx={{ overflowY: 'auto' }}>
