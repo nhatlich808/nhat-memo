@@ -12,14 +12,13 @@ export function GroupSwitcherSearchEngine({ defaultSearchEngine, switchSearchEng
             <FormControl>
                 <FormLabel id="demo-radio-buttons-group-label">{ 'Choose a source: ' }</FormLabel>
                 <RadioGroup
-                    row
                     aria-labelledby="demo-row-radio-buttons-group-label"
                     name="row-radio-buttons-group"
                     value={defaultSearchEngine}
                     onChange={switchSearchEngineHandle}
                 >
-                    <FormControlLabel value="lorda" control={<Radio />} label="Lorda AI" />
-                    <FormControlLabel value="local" control={<Radio />} label="Nhat's Sample Note" />
+                    <FormControlLabel value="lorda" control={<Radio size="small" sx={{ marginLeft: '10px' }} />} label="Lorda AI" />
+                    <FormControlLabel value="local" control={<Radio size="small" sx={{ marginLeft: '10px' }} />} label="Nhat's Sample Note" />
                 </RadioGroup>
             </FormControl>
         </Box>

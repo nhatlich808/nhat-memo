@@ -14,15 +14,14 @@ export function GroupSwitcherMode({ defaultMode, switchModeHandle }) {
             <FormControl>
                 <FormLabel id="demo-radio-buttons-group-label">{ 'Choose a theme: ' }</FormLabel>
                 <RadioGroup
-                    row
                     aria-labelledby="demo-row-radio-buttons-group-label"
                     name="row-radio-buttons-group"
                     value={defaultMode}
                     onChange={switchModeHandle}
                 >
-                    <FormControlLabel value="system" control={<Radio />} label="System" />
-                    <FormControlLabel value="light" control={<Radio />} label="Light" />
-                    <FormControlLabel value="dark" control={<Radio />} label="Dark" />
+                    <FormControlLabel value="system" control={<Radio size="small" sx={{ marginLeft: '10px' }} />} label="System" />
+                    <FormControlLabel value="light" control={<Radio size="small" sx={{ marginLeft: '10px' }} />} label="Light" />
+                    <FormControlLabel value="dark" control={<Radio size="small" sx={{ marginLeft: '10px' }} />} label="Dark" />
                 </RadioGroup>
             </FormControl>
         </Box>

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import AppTheme from '../shared-theme/AppTheme.jsx';
+import { styled, useTheme } from '@mui/material/styles';
 import {
   Box,
   Container,
@@ -14,7 +15,9 @@ import {
   AccordionDetails,
   Snackbar,
   Button,
-  Alert
+  Alert,
+  Drawer,
+  Divider
 } from '@mui/material';
 
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -24,6 +27,8 @@ import CodeIcon from '@mui/icons-material/Code';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import ShareIcon from '@mui/icons-material/Share';
 import FaceIcon from '@mui/icons-material/Face';
+import SettingsIcon from '@mui/icons-material/Settings';
+import CloseIcon from '@mui/icons-material/Close';
 
 import SwitcherMode from '../components/SwitcherMode.jsx';
 import SwitcherSearchEngine from '../components/SwitcherSearchEngine.jsx';
@@ -46,6 +51,7 @@ export default function MainPage(props) {
     const [contentGenerating, setContentGenerating] = React.useState(false);
     const [resultOriginal, setResultOriginal] = React.useState('local');
     const [searchEngine, setSearchEngine] = React.useState('lorda');
+    const [drawerOpen, setDrawerOpen] = React.useState(false);
 
     React.useEffect(() => {
         const posts = getAllPosts();
@@ -174,6 +180,28 @@ export default function MainPage(props) {
         </React.Fragment>
     );
 
+    const toggleDrawer = (open) => (event) => {
+        if (
+        event &&
+        event.type === 'keydown' &&
+        (event.key === 'Tab' || event.key === 'Shift')
+        ) {
+            return;
+        }
+
+        setDrawerOpen(open);
+    };
+
+    const DrawerHeader = styled('div')(({ theme }) => ({
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        borderRadius: 0,
+        padding: theme.spacing(0, 1),
+        // necessary for content to be below app bar
+        ...theme.mixins.toolbar,
+    }));
+
     return (
         <AppTheme {...props}>
             <Container sx={{
@@ -202,9 +230,7 @@ export default function MainPage(props) {
                         <AddBoxIcon />
                         <ShareIcon />
                     </Typography>
-                    <SwitcherMode />
-                    <SwitcherSearchEngine defaultSearchEngine={searchEngine} switchSearchEngineHandle={switchSearchEngineHandle} />
-                    
+
                     <Box sx={{
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -228,6 +254,36 @@ export default function MainPage(props) {
                         >
                             <SearchIcon />
                         </IconButton>
+                        <IconButton aria-label="Search"
+                            onClick={toggleDrawer(true)}
+                            sx={{
+                                border: 1
+                            }}
+                        >
+                            <SettingsIcon />
+                        </IconButton>
+                        <Drawer
+                            anchor="left"
+                            open={drawerOpen}
+                            onClose={toggleDrawer(false)}
+                            onOpen={toggleDrawer(true)}
+                            sx={{ borderRadius: 0 }}
+                        >
+                            <DrawerHeader>
+                                <Typography sx={{ flex: 1, with: 100 }}>{ 'Setting' }</Typography>
+                                <IconButton onClick={toggleDrawer(false)}>
+                                    <CloseIcon />
+                                </IconButton>
+                            </DrawerHeader>
+                            <Divider />
+                            <Box
+                                sx={{ width: 250, paddingLeft: '10px', borderRadius: 0 }}
+                                role="presentation"
+                            >
+                                <SwitcherMode />
+                                <SwitcherSearchEngine defaultSearchEngine={searchEngine} switchSearchEngineHandle={switchSearchEngineHandle} />
+                            </Box>
+                        </Drawer>
                         <Snackbar
                             anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
                             open={openDialog}
